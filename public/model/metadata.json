@@ -1,1 +1,16 @@
-{"tfjsVersion":"1.7.4","tmVersion":"2.4.10","packageVersion":"0.8.4-alpha2","packageName":"@teachablemachine/image","timeStamp":"2025-05-09T11:03:46.521Z","userMetadata":{},"modelName":"tm-my-image-model","labels":["TVS_Apache_RR_310","TVS_Apache_RTR_160_4V","TVS_Apache_RTR_180","TVS_Sport"],"imageSize":224}
+{
+  "tfjsVersion": "1.7.4",
+  "tmVersion": "2.4.10",
+  "packageVersion": "0.8.4-alpha2",
+  "packageName": "@teachablemachine/image",
+  "timeStamp": "2025-05-09T11:03:46.521Z",
+  "userMetadata": {},
+  "modelName": "tm-my-image-model",
+  "labels": [
+    "TVS_Apache_RR_310",
+    "TVS_Apache_RTR_160_4V",
+    "TVS_Apache_RTR_180",
+    "TVS_Sport"
+  ],
+  "imageSize": 224
+}

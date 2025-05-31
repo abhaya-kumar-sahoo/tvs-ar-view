@@ -1,6 +1,5 @@
 import { Canvas } from "@react-three/fiber";
 import { createXRStore, XR } from "@react-three/xr";
-import ARScene from "./ARScene";
 import Video1 from "./assets/videos/eg1.mp4";
 import Video2 from "./assets/videos/eg2.mp4";
 import useOrientation from "./hooks/oriantation";
@@ -22,7 +21,7 @@ const Video = ({ src, position, size }: VideoProps) => (
   />
 );
 
-export default function App() {
+export default function AppAr() {
   const isPortrait = useOrientation();
   const videoSize = isPortrait ? "w-52 h-40" : "w-64 h-40";
   const arHeight = isPortrait ? "h-[70vh]" : "h-[60vh]";
@@ -41,7 +40,7 @@ export default function App() {
             <XR store={store}>
               <ambientLight />
               <pointLight position={[0, 1, 1]} />
-              <ARScene />
+              {/* <ARScene /> */}
             </XR>
           </Canvas>
         </div>

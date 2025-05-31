@@ -1,1 +1,107 @@
 @import 'tailwindcss';
+
+
+@keyframes spin-slow {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+.spin-slow {
+    animation: spin-slow 30s linear infinite; 
+    /* background-color: brown; */
+}
+
+
+
+/* ScanRings.css */
+
+@keyframes pulseGlow {
+    0% {
+        transform: scale(0.9);
+        opacity: 0.8;
+        box-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
+    }
+
+    50% {
+        transform: scale(1.1);
+        opacity: 0.2;
+        box-shadow: 0 0 20px rgba(0, 255, 0, 0.6);
+    }
+
+    100% {
+        transform: scale(0.9);
+        opacity: 0.8;
+        box-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
+    }
+}
+
+.ring {
+    position: absolute;
+    border-radius: 9999px;
+    border: 2px solid;
+    opacity: 0.6;
+    animation: pulseGlow 3s infinite ease-in-out;
+    z-index: 0;
+}
+
+/* Add color classes */
+.ring-green {
+    border-color: #22c55e;
+    /* Tailwind's green-500 */
+    box-shadow: 0 0 15px #22c55e;
+}
+
+.ring-blue {
+    border-color: #3b82f6;
+    /* Tailwind's blue-500 */
+    box-shadow: 0 0 15px #3b82f6;
+}
+
+.ring-purple {
+    border-color: #a855f7;
+    /* Tailwind's purple-500 */
+    box-shadow: 0 0 15px #a855f7;
+}
+
+.ring-yellow {
+    border-color: #eab308;
+    /* Tailwind's yellow-500 */
+    box-shadow: 0 0 15px #eab308;
+}
+
+.ring-delay-0 {
+    animation-delay: 0s;
+}
+
+.ring-delay-1 {
+    animation-delay: 0.3s;
+}
+
+.ring-delay-2 {
+    animation-delay: 0.6s;
+}
+
+.ring-delay-3 {
+    animation-delay: 0.9s;
+}
+
+.ring-delay-4 {
+    animation-delay: 1.2s;
+}
+
+.ring-delay-5 {
+    animation-delay: 1.5s;
+}
+
+.ring-delay-6 {
+    animation-delay: 1.8s;
+}
+
+.ring-delay-7 {
+    animation-delay: 2.1s;
+}
