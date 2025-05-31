@@ -46,7 +46,12 @@ import * as THREE from "three";
 // };
 
 // Helper to add a video plane
-const VideoPlane = async (src, scene, renderer, position) => {
+const VideoPlane = async (
+  src: string,
+  scene: THREE.Scene,
+  renderer: THREE.WebGLRenderer,
+  position: [number, number, number]
+) => {
   const video = document.createElement("video");
   video.src = src;
   video.crossOrigin = "anonymous";
@@ -60,14 +65,14 @@ const VideoPlane = async (src, scene, renderer, position) => {
     video.play();
   });
 
-  function videoTextureSetup(videoElement) {
+  function videoTextureSetup(videoElement: HTMLVideoElement) {
     const texture = new THREE.VideoTexture(videoElement);
     texture.minFilter = THREE.LinearFilter;
     texture.magFilter = THREE.LinearFilter;
     texture.format = THREE.RGBFormat;
 
-    const aspect = 1.77;
-    const height = 0.4;
+    const aspect = 1.9;
+    const height = 0.7;
     const width = height * aspect;
 
     const geometry = new THREE.PlaneGeometry(width, height);

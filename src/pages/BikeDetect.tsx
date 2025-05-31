@@ -8,6 +8,8 @@ export const BikeDetect = () => {
   const webcamRef = useRef<Webcam>(null);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const [model, setModel] = useState<tmImage.CustomMobileNet | null>(null);
+  const [isWebXRSupported, setIsWebXRSupported] = useState(false);
+  const [error, setError] = useState<null | string>(null);
   const nav = useNavigate();
   const [predictions, setPredictions] = useState<
     { className: string; probability: number }[]
@@ -33,7 +35,28 @@ export const BikeDetect = () => {
       console.error("Error loading model:", error);
     }
   };
+
+  const checkWebXR = async () => {
+    try {
+      if (
+        navigator.xr &&
+        (await navigator.xr.isSessionSupported("immersive-ar"))
+      ) {
+        setIsWebXRSupported(true);
+      } else {
+        setIsWebXRSupported(false);
+        setError(
+          "WebXR or immersive AR is not supported on this device or browser."
+        );
+      }
+    } catch (err) {
+      setIsWebXRSupported(false);
+      setError(`Error checking WebXR: ${err.message}`);
+    }
+  };
+
   useEffect(() => {
+    checkWebXR();
     loadModel();
   }, []);
   // Real-time prediction from camera
@@ -49,10 +72,14 @@ export const BikeDetect = () => {
       .sort((a, b) => b.probability - a.probability)[0]; // get top one
 
     if (maxPred) {
-      setPredictions([maxPred]);
       // console.log({ maxPred: maxPred?.className });
       if (maxPred.className !== "Unknown Object") {
         // nav("/3d");
+        if (intervalRef.current) {
+          clearInterval(intervalRef.current);
+          intervalRef.current = null;
+        }
+        setPredictions([maxPred]);
       }
       // setCameraStarted(false);
       // nav("/3d");
@@ -148,6 +175,7 @@ export const BikeDetect = () => {
         {cameraStarted && (
           <div className="relative border-2 border-white p-2 rounded-2xl">
             {/* Webcam Feed */}
+
             <Webcam
               ref={webcamRef}
               audio={false}
@@ -196,83 +224,23 @@ export const BikeDetect = () => {
                 >
                   Show me Engine
                 </button>
+                <button
+                  onClick={() => {
+                    window.location.reload();
+                  }}
+                  className="px-4 mx-3 rounded bg-red-600 py-2"
+                >
+                  Restart
+                </button>
               </div>
             )}
           </ul>
         ) : (
-          <p className="text-gray-500"></p>
+          <p className="text-red-600 text-lg text-center pt-20">
+            {!isWebXRSupported && (error || "Checking WebXR support...")}
+          </p>
         )}
       </div>
     </div>
-
-    // <div className="h-screen w-screen flex justify-center items-center bg-black">
-    //   <div>
-    //     {!cameraStarted && (
-    //       <button
-    //         onClick={startCamera}
-    //         className="mb-40 group relative inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-red-500 via-lime-400 to-blue-500 text-white font-semibold rounded-xl shadow-[0_0_15px_rgba(132,204,22,0.7)] hover:shadow-[0_0_25px_rgba(132,204,22,1)] transition-all duration-300 ease-in-out hover:scale-105"
-    //         title="Activate your camera to scan and identify the bike"
-    //       >
-    //         <svg
-    //           xmlns="http://www.w3.org/2000/svg"
-    //           className="h-5 w-5 text-white"
-    //           fill="none"
-    //           viewBox="0 0 24 24"
-    //           stroke="currentColor"
-    //           strokeWidth={2}
-    //         >
-    //           <path d="M5.5 17.5A2.5 2.5 0 1 0 5.5 12a2.5 2.5 0 0 0 0 5.5zm13 0A2.5 2.5 0 1 0 18.5 12a2.5 2.5 0 0 0 0 5.5zM7.5 17.5h2L11 12h2l1.5 5.5h2" />
-    //           <path d="M5.5 12l2-3h4M14 9h4" />
-    //         </svg>
-    //         <span>Scan Bike with Camera</span>
-    //       </button>
-    //     )}
-    //     {cameraStarted && (
-    //       <div className="relative border-2 border-white p-2 rounded-2xl">
-    //         {/* Webcam Feed */}
-    //         <Webcam
-    //           ref={webcamRef}
-    //           audio={false}
-    //           className="rounded-md w-96 h-64 object-cover"
-    //           videoConstraints={{
-    //             facingMode: { exact: "environment" }, // back camera
-    //           }}
-    //         />
-
-    //         {/* Centered Overlay Grid */}
-    //         <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
-    //           <div className="w-[290px] h-[170px] relative">
-    //             {/* Corner Borders */}
-    //             {/* Top Left */}
-    //             <div className="absolute top-0 left-0 w-6 h-6 border-t-4 border-l-4 border-green-500 rounded-tl-md" />
-    //             {/* Top Right */}
-    //             <div className="absolute top-0 right-0 w-6 h-6 border-t-4 border-r-4 border-green-500 rounded-tr-md" />
-    //             {/* Bottom Left */}
-    //             <div className="absolute bottom-0 left-0 w-6 h-6 border-b-4 border-l-4 border-green-500 rounded-bl-md" />
-    //             {/* Bottom Right */}
-    //             <div className="absolute bottom-0 right-0 w-6 h-6 border-b-4 border-r-4 border-green-500 rounded-br-md" />
-    //           </div>
-    //         </div>
-    //       </div>
-    //     )}
-    //     {predictions.length > 0 ? (
-    //       <ul className="space-y-2">
-    //         {predictions.map((pred, index) => (
-    //           <li
-    //             key={index}
-    //             className="flex justify-center text-gray-100 border-b py-2"
-    //           >
-    //             <span className="text-center">{pred.className}</span>
-    //             {/* <span className="font-medium ml-2">
-    //               {(pred.probability * 100).toFixed(2)}%
-    //             </span> */}
-    //           </li>
-    //         ))}
-    //       </ul>
-    //     ) : (
-    //       <p className="text-gray-500"></p>
-    //     )}
-    //   </div>
-    // </div>
   );
 };

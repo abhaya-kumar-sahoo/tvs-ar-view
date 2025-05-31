@@ -1,8 +1,19 @@
+/* eslint-disable no-self-assign */
+/* eslint-disable @typescript-eslint/ban-ts-comment */
+import { WebGLRenderer } from "three/src/Three.js";
+
 // createARButton.js
-export default function createARButton(renderer, sessionInit = {}) {
+export default function createARButton(
+  renderer: WebGLRenderer,
+  sessionInit = {}
+) {
   // Merge default sessionInit with provided options
   const defaultSessionInit = {
+    //@ts-expect-error
+
     requiredFeatures: sessionInit.requiredFeatures || [],
+
+    //@ts-expect-error
     optionalFeatures: sessionInit.optionalFeatures || [],
   };
   if (!defaultSessionInit.requiredFeatures.includes("hit-test")) {
@@ -60,6 +71,8 @@ export default function createARButton(renderer, sessionInit = {}) {
 
   // DOM overlay for exit button
   let overlay = null;
+  //@ts-expect-error
+
   if (!sessionInit.domOverlay) {
     overlay = document.createElement("div");
     overlay.style.display = "none";
@@ -76,17 +89,22 @@ export default function createARButton(renderer, sessionInit = {}) {
     const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
     path.setAttribute("d", "M 12,12 L 28,28 M 28,12 12,28");
     path.setAttribute("stroke", "#fff");
-    path.setAttribute("stroke-width", 2);
+    path.setAttribute("stroke-width", "2");
     svg.appendChild(path);
 
     defaultSessionInit.optionalFeatures.push("dom-overlay");
+    //@ts-expect-error
+
     defaultSessionInit.domOverlay = { root: overlay };
   }
 
-  let currentSession = null;
+  let currentSession: {
+    removeEventListener: (arg0: string, arg1: () => void) => void;
+    end: () => void;
+  } | null = null;
 
   // Start AR session
-  async function onSessionStarted(session) {
+  async function onSessionStarted(session: XRSession) {
     session.addEventListener("end", onSessionEnded);
 
     renderer.xr.setReferenceSpaceType("local");
@@ -95,7 +113,11 @@ export default function createARButton(renderer, sessionInit = {}) {
     button.textContent = "Stop AR";
     button.style.opacity = "0.5";
     button.style.cursor = "not-allowed";
+    //@ts-expect-error
+
     if (defaultSessionInit.domOverlay) {
+      //@ts-expect-error
+
       defaultSessionInit.domOverlay.root.style.display = "";
     }
 
@@ -104,12 +126,17 @@ export default function createARButton(renderer, sessionInit = {}) {
 
   // End AR session
   function onSessionEnded() {
+    //@ts-expect-error
     currentSession.removeEventListener("end", onSessionEnded);
 
     button.textContent = "Start AR";
     button.style.opacity = "0.8";
     button.style.cursor = "pointer";
+    //@ts-expect-error
+
     if (defaultSessionInit.domOverlay) {
+      //@ts-expect-error
+
       defaultSessionInit.domOverlay.root.style.display = "none";
     }
 
@@ -120,7 +147,7 @@ export default function createARButton(renderer, sessionInit = {}) {
   }
 
   // Disable button for errors
-  function disableButton(message) {
+  function disableButton(message: string | null) {
     button.textContent = message;
     button.style.opacity = "0.5";
     button.style.cursor = "auto";
@@ -135,6 +162,8 @@ export default function createARButton(renderer, sessionInit = {}) {
   button.onclick = async () => {
     if (currentSession === null) {
       try {
+        //@ts-expect-error
+
         const session = await navigator.xr.requestSession(
           "immersive-ar",
           defaultSessionInit
@@ -151,6 +180,7 @@ export default function createARButton(renderer, sessionInit = {}) {
           button.style.animation = "gradientShift 10s ease infinite";
           button.style.opacity = "0.8";
           button.style.cursor = "pointer";
+
           button.onclick = button.onclick; // Restore click handler
         }, 2000);
       }
@@ -161,6 +191,8 @@ export default function createARButton(renderer, sessionInit = {}) {
 
   // Check WebXR support
   if ("xr" in navigator) {
+    //@ts-expect-error
+
     navigator.xr
       .isSessionSupported("immersive-ar")
       .then((supported) => {
@@ -180,6 +212,8 @@ export default function createARButton(renderer, sessionInit = {}) {
 
   // Add exit button functionality to SVG
   if (overlay) {
+    //@ts-expect-error
+
     overlay.querySelector("svg").addEventListener("click", () => {
       if (currentSession) {
         currentSession.end();

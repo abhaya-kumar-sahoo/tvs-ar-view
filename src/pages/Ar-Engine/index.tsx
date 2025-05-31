@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import * as THREE from "three";
 import Video1 from "../../assets/videos/eg1.mp4";
 import Video2 from "../../assets/videos/eg2.mp4";
@@ -13,7 +13,6 @@ export default function App() {
   const rendererRef = useRef(
     new THREE.WebGLRenderer({ antialias: true, alpha: true })
   );
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const scene = sceneRef.current;
@@ -24,12 +23,16 @@ export default function App() {
     renderer.xr.enabled = true;
 
     document.body.appendChild(renderer.domElement);
-
+    // Setup AR button
+    const arButton = createARButton(renderer, {
+      requiredFeatures: ["hit-test"],
+    });
+    document.body.appendChild(arButton);
     // Add lights
     addLights(scene);
 
     // Load scene content
-    Text3D(scene, "TVS Pulser");
+    Text3D(scene, "TVS Apache RR 310");
     VideoPlane(Video1, scene, renderer, [-1.2, 0.6, -2]);
     VideoPlane(Video2, scene, renderer, [1.2, 0.6, -2]);
     GLBModel(scene, "/model.glb", [-1, -0.5, -2]);
@@ -39,21 +42,12 @@ export default function App() {
       renderer.render(scene, camera);
     });
 
-    // Setup AR button
-    const arButton = createARButton(renderer, {
-      requiredFeatures: ["hit-test"],
-    });
-    document.body.appendChild(arButton);
-
     // Click the AR button after small delay (once it's in the DOM)
-    const startTimeout = setTimeout(() => {
-      arButton.click(); // Start AR session
-      setLoading(false); // Hide loader
-    }, 1000);
+    // arButton.click(); // Start AR session
 
     // Cleanup
     return () => {
-      clearTimeout(startTimeout);
+      // clearTimeout(startTimeout);
       renderer.setAnimationLoop(null);
       if (renderer.domElement.parentNode) {
         renderer.domElement.parentNode.removeChild(renderer.domElement);
@@ -64,18 +58,10 @@ export default function App() {
     };
   }, []);
 
-  return (
-    <>
-      {loading && (
-        <div className="fixed top-0 left-0 w-full h-full bg-black text-white flex items-center justify-center z-50">
-          <div className="animate-pulse text-xl">Loading AR Scene...</div>
-        </div>
-      )}
-    </>
-  );
+  return null;
 }
 
-function addLights(scene) {
+function addLights(scene: THREE.Scene) {
   const hemiLight = new THREE.HemisphereLight(0xffffff, 0xbbbbff, 1);
   hemiLight.position.set(0.5, 1, 0.25);
   scene.add(hemiLight);
