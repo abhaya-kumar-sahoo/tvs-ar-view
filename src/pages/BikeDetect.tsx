@@ -1,8 +1,11 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useRef, useState } from "react";
 import Webcam from "react-webcam";
 import * as tmImage from "@teachablemachine/image";
 import * as tf from "@tensorflow/tfjs";
 import { useNavigate } from "react-router-dom";
+// const isiOS = /iPhone|iPad|iPod/.test(navigator.userAgent);
+// const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
 
 export const BikeDetect = () => {
   const webcamRef = useRef<Webcam>(null);
@@ -49,9 +52,9 @@ export const BikeDetect = () => {
           "WebXR or immersive AR is not supported on this device or browser."
         );
       }
-    } catch (err) {
+    } catch (err: any) {
       setIsWebXRSupported(false);
-      setError(`Error checking WebXR: ${err.message}`);
+      setError(`Error checking WebXR: ${err?.message}`);
     }
   };
 

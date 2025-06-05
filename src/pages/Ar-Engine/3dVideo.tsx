@@ -71,8 +71,8 @@ const VideoPlane = async (
     texture.magFilter = THREE.LinearFilter;
     texture.format = THREE.RGBFormat;
 
-    const aspect = 1.9;
-    const height = 0.7;
+    const aspect = 1.6;
+    const height = 0.5;
     const width = height * aspect;
 
     const geometry = new THREE.PlaneGeometry(width, height);

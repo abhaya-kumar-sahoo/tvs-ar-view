@@ -10,7 +10,7 @@ const GLBModel = (
   const envMap = new THREE.CubeTextureLoader()
     .setPath("/env/") // Folder must have 6 images: px, nx, py, ny, pz, nz
     .load(["px.jpg", "nx.jpg", "py.jpg", "ny.jpg", "pz.jpg", "nz.jpg"]);
-  const scale = 0.1;
+  const scale = 0.06;
   const loader = new GLTFLoader();
   loader.load(
     modelPath,

@@ -43,7 +43,7 @@ export default function createARButton(
   button.style.opacity = "0.8";
   button.style.boxShadow = "0 4px 8px rgba(0, 0, 0, 0.3)";
   button.style.zIndex = "999";
-  button.style.display = "";
+  button.style.display = "none";
 
   // Add CSS animation
   const style = document.createElement("style");
