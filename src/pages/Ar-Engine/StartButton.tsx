@@ -168,6 +168,7 @@ export default function createARButton(
           "immersive-ar",
           defaultSessionInit
         );
+
         await onSessionStarted(session);
       } catch (error) {
         console.warn("Failed to start AR session:", error);

@@ -105,3 +105,16 @@
 .ring-delay-7 {
     animation-delay: 2.1s;
 }
+
+@keyframes bike-run {
+  0% {
+    left: -4rem;
+  }
+  100% {
+    left: 100%;
+  }
+}
+
+.animate-bike-run {
+  animation: bike-run 5s linear infinite;
+}

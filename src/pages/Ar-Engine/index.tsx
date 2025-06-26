@@ -1,14 +1,14 @@
 import { useEffect, useRef } from "react";
 import * as THREE from "three";
-import Video1 from "../../assets/videos/eg-video.mp4";
-// import Video2 from "../../assets/videos/eg2.mp4";
-import Text3D from "./Text3D";
-import VideoPlane from "./3dVideo";
-import GLBModel from "./GLBModel";
 import createARButton from "./StartButton";
+import VideoPlane from "./3dVideo";
+import Video1 from "../../assets/videos/eg-video.mp4";
+import GLBModel from "./GLBModel";
+import Text3D from "./Text3D";
 
 export default function App() {
   const sceneRef = useRef(new THREE.Scene());
+
   const cameraRef = useRef(
     new THREE.PerspectiveCamera(
       70,
@@ -20,52 +20,99 @@ export default function App() {
   const rendererRef = useRef(
     new THREE.WebGLRenderer({ antialias: true, alpha: true })
   );
+  const modelRef = useRef<THREE.Object3D | null>(null);
+  const isModelAdded = useRef(false);
 
   useEffect(() => {
     const scene = sceneRef.current;
     const camera = cameraRef.current;
     const renderer = rendererRef.current;
 
-    // Set size correctly
+    const listener = new THREE.AudioListener();
+    camera.add(listener);
+
+    const sound = new THREE.PositionalAudio(listener); // or THREE.Audio for non-positional
+
+    const audioLoader = new THREE.AudioLoader();
+    audioLoader.load("/tech-audio.mp3", (buffer) => {
+      sound.setBuffer(buffer);
+      sound.setRefDistance(1);
+      sound.setLoop(false);
+      sound.setVolume(0.8);
+      sound.play();
+    });
+
+    if (modelRef.current) {
+      modelRef.current.add(sound); // Attach to model in AR
+    }
+
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.xr.enabled = true;
-
     document.body.appendChild(renderer.domElement);
 
-    // Handle iOS Chrome issue
-    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-    const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
-    if (isIOS && !isSafari) {
-      alert("Please open this site in Safari for AR support on iOS.");
-    }
-
-    if (!navigator.xr) {
-      alert("WebXR not supported on this device/browser.");
-    }
-
-    // Add AR button
+    // AR Button
     const arButton = createARButton(renderer, {
       requiredFeatures: ["hit-test"],
     });
     document.body.appendChild(arButton);
 
-    // Lights
+    // Lighting
     addOptimizedLights(scene);
 
     // Load initial 3D text
     Text3D(scene, "TVS Apache RR 310", [-1, 0.25, -2]);
 
     // Load 3D model
-    GLBModel(scene, "/model.glb", [0.1, -0.3, -2]);
+    GLBModel(scene, "/model.glb", [0.1, -0.3, -2], isModelAdded, modelRef);
 
     VideoPlane(Video1, scene, renderer, [-0.7, -0.2, -2]);
-    // VideoPlane(Video2, scene, renderer, [1.2, 0.6, -2]);
-    // Start render loop
+    // Render Loop
     renderer.setAnimationLoop(() => {
       renderer.render(scene, camera);
     });
-    arButton.click();
-    // Handle resize
+
+    // Touch Gestures
+    let initialTouchDist = 0;
+    let initialScale = 1;
+    let lastTouch: { clientX: number } | null = null;
+
+    const handleTouchMove = (e: TouchEvent) => {
+      const model = modelRef.current;
+      if (!model) return;
+
+      if (e.touches.length === 2) {
+        const dx = e.touches[0].clientX - e.touches[1].clientX;
+        const dy = e.touches[0].clientY - e.touches[1].clientY;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+
+        if (!initialTouchDist) {
+          initialTouchDist = dist;
+          initialScale = model.scale.x;
+          return;
+        }
+
+        const scaleFactor = dist / initialTouchDist;
+        const newScale = initialScale * scaleFactor;
+        model.scale.set(newScale, newScale, newScale);
+      }
+
+      if (e.touches.length === 1 && lastTouch) {
+        const deltaX = e.touches[0].clientX - lastTouch.clientX;
+        model.rotation.y += deltaX * 0.01;
+      }
+
+      lastTouch = { clientX: e.touches[0].clientX };
+    };
+
+    const handleTouchEnd = () => {
+      initialTouchDist = 0;
+      lastTouch = null;
+    };
+
+    window.addEventListener("touchmove", handleTouchMove, { passive: true });
+    window.addEventListener("touchend", handleTouchEnd);
+
+    // Resize Handling
     const onResize = () => {
       camera.aspect = window.innerWidth / window.innerHeight;
       camera.updateProjectionMatrix();
@@ -73,10 +120,15 @@ export default function App() {
     };
     window.addEventListener("resize", onResize);
 
+    // Auto start AR
+    arButton.click();
+
     // Cleanup
     return () => {
       renderer.setAnimationLoop(null);
       window.removeEventListener("resize", onResize);
+      window.removeEventListener("touchmove", handleTouchMove);
+      window.removeEventListener("touchend", handleTouchEnd);
 
       if (renderer.domElement.parentNode) {
         renderer.domElement.parentNode.removeChild(renderer.domElement);
@@ -84,6 +136,12 @@ export default function App() {
 
       if (arButton && arButton.parentNode) {
         arButton.parentNode.removeChild(arButton);
+      }
+
+      if (modelRef.current) {
+        scene.remove(modelRef.current);
+        modelRef.current = null;
+        isModelAdded.current = false;
       }
     };
   }, []);

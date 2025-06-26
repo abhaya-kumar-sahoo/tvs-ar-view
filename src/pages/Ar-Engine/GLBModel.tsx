@@ -5,7 +5,9 @@ import { GLTFLoader, GLTF } from "three/examples/jsm/loaders/GLTFLoader";
 const GLBModel = (
   scene: THREE.Scene,
   modelPath: string,
-  position: [number, number, number]
+  position: [number, number, number],
+  isModelAdded: any,
+  modelRef: any
 ): void => {
   const envMap = new THREE.CubeTextureLoader()
     .setPath("/env/") // Folder must have 6 images: px, nx, py, ny, pz, nz
@@ -15,6 +17,7 @@ const GLBModel = (
   loader.load(
     modelPath,
     (gltf: GLTF) => {
+      if (isModelAdded.current) return;
       const model = gltf.scene;
       model.position.set(...position);
       model.scale.set(scale, scale, scale);
@@ -52,6 +55,9 @@ const GLBModel = (
       });
 
       scene.add(model);
+
+      modelRef.current = model;
+      isModelAdded.current = true;
     },
     undefined,
     (error) => {
