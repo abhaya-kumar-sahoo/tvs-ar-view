@@ -6,7 +6,7 @@ import { Navigation } from "swiper/modules";
 import "swiper/css";
 //@ts-expect-error
 import "swiper/css/navigation";
-import tvsLogo from "../assets/svg/tvs_logo.svg";
+import tvsLogo from "../assets/images/tvs-logo.png";
 import homeBanner from "../assets/images/home_banner.webp";
 import fi5259008 from "../assets/svg/fi_5259008.svg";
 import slide1 from "../assets/images/slide-img1.webp";
@@ -15,20 +15,20 @@ import slide3 from "../assets/images/slide-img3.webp";
 import slide4 from "../assets/images/slide-img4.webp";
 import slide5 from "../assets/images/slide-img5.webp";
 import bikeImg from "../assets/images/bike.webp";
-
+import { useNavigate } from "react-router-dom";
 const slides = [slide1, slide2, slide3, slide4, slide5];
 
 interface HomeMobileProps {
   onStartAr?: () => void;
 }
 
-const HomeMobile: React.FC<HomeMobileProps> = ({ onStartAr = () => {} }) => {
+const HomeMobile: React.FC<HomeMobileProps> = () => {
   const [current, setCurrent] = useState(0);
   const [loaded, setLoaded] = useState(false);
-
+  const nav = useNavigate();
   return (
-    <div className="w-full max-w-md mx-auto bg-white min-h-screen flex flex-col items-center font-sans">
-      <header className="w-full flex justify-center items-center pt-6 pb-2 bg-white">
+    <div className="w-full  max-w-md mx-auto bg-white min-h-screen flex flex-col items-center font-sans">
+      <header className="w-full flex justify-center items-center pt-6  bg-white">
         <img
           src={tvsLogo}
           alt="TVS Logo"
@@ -36,12 +36,12 @@ const HomeMobile: React.FC<HomeMobileProps> = ({ onStartAr = () => {} }) => {
           className="w-32 md:w-36 h-auto"
         />
       </header>
-      <div className="w-full aspect-[250/300] mt-4 md:mt-8">
+      <div className="w-full aspect-[250/300] mt-4">
         <img
           src={homeBanner}
           onLoad={() => setLoaded(true)}
           alt="Home Banner"
-          className={`w-full h-auto mt-4 md:mt-8 transition-opacity duration-300 ${
+          className={`w-full h-[60vh] object-cover  transition-opacity duration-300 ${
             loaded ? "opacity-100" : "opacity-0"
           }`}
         />
@@ -49,7 +49,9 @@ const HomeMobile: React.FC<HomeMobileProps> = ({ onStartAr = () => {} }) => {
 
       <div className="w-full my-10 px-4 justify-center align-middle flex">
         <button
-          onClick={onStartAr}
+          onClick={() => {
+            nav("/cam");
+          }}
           className="w-full py-5 cursor-pointer rounded-lg bg-gradient-to-r from-[#E62D38] to-[#183883] text-white font-bold text-[16px] leading-[1.24em] shadow-[0_0_15px_#E12338] md:max-w-md md:py-4 md:text-xl relative overflow-hidden neon-glow"
           style={{
             textShadow: "0px 4px 20px rgba(0,0,0,0.2)",

@@ -5,9 +5,11 @@ import VideoPlane from "./3dVideo";
 import Video1 from "../../assets/videos/eg-video.mp4";
 import GLBModel from "./GLBModel";
 import Text3D from "./Text3D";
+import { useNavigationStep } from "../../components/Navigation.Context";
 
 export default function App() {
   const sceneRef = useRef(new THREE.Scene());
+  const { setCurrentStep } = useNavigationStep();
 
   const cameraRef = useRef(
     new THREE.PerspectiveCamera(
@@ -129,7 +131,7 @@ export default function App() {
       window.removeEventListener("resize", onResize);
       window.removeEventListener("touchmove", handleTouchMove);
       window.removeEventListener("touchend", handleTouchEnd);
-
+      setCurrentStep(1);
       if (renderer.domElement.parentNode) {
         renderer.domElement.parentNode.removeChild(renderer.domElement);
       }
