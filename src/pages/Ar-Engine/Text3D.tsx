@@ -7,6 +7,7 @@ const Text3D = (
   scene: THREE.Scene,
   text: string,
   position: [number, number, number]
+  // font: any
 ) => {
   const loader = new FontLoader();
   const font = loader.parse(Fonts as any);

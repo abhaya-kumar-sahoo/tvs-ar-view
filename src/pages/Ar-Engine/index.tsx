@@ -1,13 +1,14 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import createARButton from "./StartButton";
-import VideoPlane from "./3dVideo";
+import { FontLoader, Font } from "three/examples/jsm/loaders/FontLoader";
+import { TextGeometry } from "three/examples/jsm/geometries/TextGeometry";
+import Fonts from "../../assets/fonts/RushbladeDemo_Italic.json";
 import Video1 from "../../assets/videos/eg-video.mp4";
 import GLBModel from "./GLBModel";
-import Text3D from "./Text3D";
 import { useNavigationStep } from "../../components/Navigation.Context";
 
-export default function App() {
+export default function ARFontAudioExample() {
   const sceneRef = useRef(new THREE.Scene());
   const { setCurrentStep } = useNavigationStep();
 
@@ -22,56 +23,193 @@ export default function App() {
   const rendererRef = useRef(
     new THREE.WebGLRenderer({ antialias: true, alpha: true })
   );
+
+  // --- Asset Refs ---
+  const textRef = useRef<THREE.Mesh | null>(null);
+  const videoRef = useRef<THREE.Mesh | null>(null);
   const modelRef = useRef<THREE.Object3D | null>(null);
-  const isModelAdded = useRef(false);
+
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // ✅ Promise wrapper for font loading
+  const loadFont = (): Promise<Font> => {
+    return new Promise((resolve, reject) => {
+      try {
+        const loader = new FontLoader();
+        const font = loader.parse(Fonts); // parse JSON font
+        if (font) {
+          resolve(font);
+        } else {
+          reject(new Error("Failed to parse font"));
+        }
+      } catch (err) {
+        reject(err);
+      }
+    });
+  };
+
+  // ✅ Promise wrapper for audio loading
+  const loadAudio = (
+    listener: THREE.AudioListener
+  ): Promise<THREE.PositionalAudio> => {
+    return new Promise((resolve, reject) => {
+      try {
+        const sound = new THREE.PositionalAudio(listener);
+        const audioLoader = new THREE.AudioLoader();
+        audioLoader.load(
+          "/tech-audio.mp3",
+          (buffer) => {
+            sound.setBuffer(buffer);
+            sound.setRefDistance(1);
+            sound.setLoop(false);
+            sound.setVolume(0.8);
+            resolve(sound);
+          },
+          undefined,
+          (err) => reject(err)
+        );
+      } catch (err) {
+        reject(err);
+      }
+    });
+  };
+
+  // ✅ Promise wrapper for video loading
+  const loadVideo = (): Promise<THREE.VideoTexture> => {
+    return new Promise((res, rej) => {
+      const video = document.createElement("video");
+      video.src = Video1;
+      video.crossOrigin = "anonymous";
+      video.loop = true;
+      video.muted = true;
+      video
+        .play()
+        .then(() => {
+          const texture = new THREE.VideoTexture(video);
+          res(texture);
+        })
+        .catch(rej);
+    });
+  };
 
   useEffect(() => {
     const scene = sceneRef.current;
     const camera = cameraRef.current;
     const renderer = rendererRef.current;
 
-    const listener = new THREE.AudioListener();
-    camera.add(listener);
-
-    const sound = new THREE.PositionalAudio(listener); // or THREE.Audio for non-positional
-
-    const audioLoader = new THREE.AudioLoader();
-    audioLoader.load("/tech-audio.mp3", (buffer) => {
-      sound.setBuffer(buffer);
-      sound.setRefDistance(1);
-      sound.setLoop(false);
-      sound.setVolume(0.8);
-      sound.play();
-    });
-
-    if (modelRef.current) {
-      modelRef.current.add(sound); // Attach to model in AR
-    }
-
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.xr.enabled = true;
     document.body.appendChild(renderer.domElement);
 
-    // AR Button
+    // Add AR Button
     const arButton = createARButton(renderer, {
       requiredFeatures: ["hit-test"],
     });
     document.body.appendChild(arButton);
 
-    // Lighting
-    addOptimizedLights(scene);
+    // Lights
+    const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 1.5); // default 1 → now 1.5
+    scene.add(hemiLight);
 
-    // Load initial 3D text
-    Text3D(scene, "TVS Apache RR 310", [-1, 0.25, -2]);
+    const dirLight = new THREE.DirectionalLight(0xffffff, 2); // default 1 → now 2
+    dirLight.position.set(5, 10, 7.5);
+    scene.add(dirLight);
 
-    // Load 3D model
-    GLBModel(scene, "/model.glb", [0.1, -0.3, -2], isModelAdded, modelRef);
+    // Audio listener
+    const listener = new THREE.AudioListener();
+    camera.add(listener);
 
-    VideoPlane(Video1, scene, renderer, [-0.7, -0.2, -2]);
-    // Render Loop
+    // ✅ Load font + audio + video + glb
+    Promise.all([
+      loadFont(),
+      loadAudio(listener),
+      loadVideo(),
+      GLBModel(scene, "/model.glb", [0.25, -0.3, -1.5]),
+    ])
+      .then(([font, sound, videoTexture, glbModel]) => {
+        // --- Add 3D text (once) ---
+        if (!textRef.current) {
+          const textGeometry = new TextGeometry("TVS Apache RR 310", {
+            font: font,
+            size: 0.15,
+            depth: 0.02,
+            curveSegments: 12,
+            bevelEnabled: true,
+            bevelThickness: 0.005,
+            bevelSize: 0.003,
+            bevelOffset: 0,
+            bevelSegments: 5,
+          });
+          const material = new THREE.MeshStandardMaterial({ color: 0xff0000 });
+          const textMesh = new THREE.Mesh(textGeometry, material);
+          textMesh.position.set(-1, 0.25, -2);
+          textMesh.add(sound);
+          scene.add(textMesh);
+          sound.play();
+
+          textRef.current = textMesh;
+        }
+
+        // --- Video Plane (once) ---
+        if (!videoRef.current) {
+          const videoMaterial = new THREE.MeshBasicMaterial({
+            map: videoTexture,
+          });
+          const aspect = 1.6;
+          const height = 0.8;
+          const width = height * aspect;
+          const videoPlane = new THREE.Mesh(
+            new THREE.PlaneGeometry(width, height),
+            videoMaterial
+          );
+          videoPlane.position.set(-1, -0.2, -2);
+          scene.add(videoPlane);
+
+          videoRef.current = videoPlane;
+        }
+
+        // --- GLB Model (once) ---
+        if (!modelRef.current) {
+          // scene.add(glbModel);
+          // modelRef.current = glbModel;
+
+          const box = new THREE.Box3().setFromObject(glbModel);
+          const center = box.getCenter(new THREE.Vector3());
+          const size = box.getSize(new THREE.Vector3());
+
+          // pick 70% up along Y axis (0 = bottom, 1 = top)
+          const pivotY = box.min.y + size.y * 0.9;
+
+          // rotation anchor
+          const pivotPoint = new THREE.Vector3(center.x, pivotY, center.z);
+
+          // shift model so that point is at pivot (0,0,0)
+          glbModel.position.sub(pivotPoint);
+
+          const pivot = new THREE.Group();
+          pivot.add(glbModel);
+          pivot.position.set(0.25, -0.1, -1.5); // world placement
+          scene.add(pivot);
+
+          modelRef.current = pivot;
+        }
+
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error("Asset loading failed:", err);
+        setError("Failed to load AR assets");
+        setLoading(false);
+      });
+
+    // Render loop
     renderer.setAnimationLoop(() => {
       renderer.render(scene, camera);
     });
+
+    // Auto Start AR
+    arButton.click();
 
     // Touch Gestures
     let initialTouchDist = 0;
@@ -79,8 +217,8 @@ export default function App() {
     let lastTouch: { clientX: number } | null = null;
 
     const handleTouchMove = (e: TouchEvent) => {
-      const model = modelRef.current;
-      if (!model) return;
+      const pivot = modelRef.current; // now pivot group
+      if (!pivot) return;
 
       if (e.touches.length === 2) {
         const dx = e.touches[0].clientX - e.touches[1].clientX;
@@ -89,18 +227,18 @@ export default function App() {
 
         if (!initialTouchDist) {
           initialTouchDist = dist;
-          initialScale = model.scale.x;
+          initialScale = pivot.scale.x;
           return;
         }
 
         const scaleFactor = dist / initialTouchDist;
         const newScale = initialScale * scaleFactor;
-        model.scale.set(newScale, newScale, newScale);
+        pivot.scale.set(newScale, newScale, newScale);
       }
 
       if (e.touches.length === 1 && lastTouch) {
         const deltaX = e.touches[0].clientX - lastTouch.clientX;
-        model.rotation.y += deltaX * 0.01;
+        pivot.rotation.y += deltaX * 0.01;
       }
 
       lastTouch = { clientX: e.touches[0].clientX };
@@ -122,9 +260,6 @@ export default function App() {
     };
     window.addEventListener("resize", onResize);
 
-    // Auto start AR
-    arButton.click();
-
     // Cleanup
     return () => {
       renderer.setAnimationLoop(null);
@@ -132,39 +267,85 @@ export default function App() {
       window.removeEventListener("touchmove", handleTouchMove);
       window.removeEventListener("touchend", handleTouchEnd);
       setCurrentStep(1);
+
       if (renderer.domElement.parentNode) {
         renderer.domElement.parentNode.removeChild(renderer.domElement);
       }
-
       if (arButton && arButton.parentNode) {
         arButton.parentNode.removeChild(arButton);
       }
 
+      // Dispose text
+      if (textRef.current) {
+        scene.remove(textRef.current);
+        textRef.current.geometry.dispose();
+        (textRef.current.material as THREE.Material).dispose();
+        textRef.current = null;
+      }
+
+      // Dispose video
+      if (videoRef.current) {
+        scene.remove(videoRef.current);
+        videoRef.current.geometry.dispose();
+        (videoRef.current.material as THREE.Material).dispose();
+        videoRef.current = null;
+      }
+
+      // Dispose model
       if (modelRef.current) {
         scene.remove(modelRef.current);
         modelRef.current = null;
-        isModelAdded.current = false;
       }
     };
   }, []);
 
-  return null;
-}
+  return (
+    <>
+      {/* Loading Overlay */}
+      {loading && !error && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-gradient-to-br from-blue-900 via-black to-red-900">
+          <div className="flex flex-col items-center space-y-6">
+            {/* Gradient Spinner */}
+            <div className="relative">
+              <div className="h-14 w-14 animate-spin rounded-full border-4 border-transparent border-t-blue-500 border-r-red-500"></div>
+              <div className="absolute inset-2 rounded-full bg-gradient-to-r from-blue-500 to-red-500 blur-md opacity-40"></div>
+            </div>
 
-function addOptimizedLights(scene: THREE.Scene) {
-  const hemiLight = new THREE.HemisphereLight(0xffffff, 0xbbbbff, 1);
-  hemiLight.position.set(0.5, 1, 0.25);
-  scene.add(hemiLight);
+            {/* Text */}
+            <p className="text-xl font-semibold bg-gradient-to-r from-blue-400 to-red-400 bg-clip-text text-transparent animate-pulse">
+              Loading AR Experience...
+            </p>
+          </div>
+        </div>
+      )}
 
-  const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
-  dirLight.position.set(3, 10, 5);
-  dirLight.castShadow = true;
-  scene.add(dirLight);
-
-  const pointLight = new THREE.PointLight(0xffffff, 1);
-  pointLight.position.set(0, 2, -2);
-  scene.add(pointLight);
-
-  const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
-  scene.add(ambientLight);
+      {/* Error Overlay */}
+      {error && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-red-600/90">
+          <div className="flex flex-col items-center space-y-3">
+            <svg
+              className="h-12 w-12 text-white animate-bounce"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.668 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L4.34 16c-.77 1.332.192 3 1.732 3z"
+              />
+            </svg>
+            <p className="text-lg font-semibold text-white">{error}</p>
+            <button
+              onClick={() => window.location.reload()}
+              className="mt-2 rounded-lg bg-white/20 px-4 py-2 text-sm text-white hover:bg-white/30 transition"
+            >
+              Retry
+            </button>
+          </div>
+        </div>
+      )}
+    </>
+  );
 }

@@ -6,7 +6,7 @@ const VideoPlane = async (
   scene: THREE.Scene,
   renderer: THREE.WebGLRenderer,
   position: [number, number, number]
-) => {
+): Promise<HTMLVideoElement> => {
   const video = document.createElement("video");
   video.src = src;
   video.crossOrigin = "anonymous";
@@ -40,6 +40,8 @@ const VideoPlane = async (
     mesh.position.set(...position);
     scene.add(mesh);
   }
+
+  return video; // Return the video element
 };
 
 export default VideoPlane;

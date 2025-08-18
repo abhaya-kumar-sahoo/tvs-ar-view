@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import Webcam from "react-webcam";
 import * as tmImage from "@teachablemachine/image";
 import * as tf from "@tensorflow/tfjs";
@@ -21,7 +21,7 @@ export const BikeDetect = () => {
   >([]);
   // const [cameraStarted, setCameraStarted] = useState(false);
   const isPortrait = useOrientation();
-  const startCamera = () => {
+  const startCamera = useCallback(() => {
     enterFullscreenAndUnlock();
     if (!isPortrait) {
       requestCameraPermission();
@@ -31,11 +31,11 @@ export const BikeDetect = () => {
         { type: "warning" }
       );
     }
-  };
+  }, [isPortrait]);
 
   useEffect(() => {
     startCamera();
-  }, []);
+  }, [startCamera]);
   // Load the Teachable Machine model
   const loadModel = async () => {
     const modelURL = "/310rr-bike-model/model.json";
@@ -76,7 +76,7 @@ export const BikeDetect = () => {
     loadModel();
   }, []);
   // Real-time prediction from camera
-  const runWebcamPrediction = async () => {
+  const runWebcamPrediction = useCallback(async () => {
     if (!model || !webcamRef.current || !webcamRef.current.video) return;
     console.log("Running webcam prediction...");
     const prediction = await model.predict(webcamRef.current.video);
@@ -90,7 +90,7 @@ export const BikeDetect = () => {
     if (maxPred) {
       // console.log({ maxPred: maxPred?.className });
       if (maxPred.className !== "Unknown Object") {
-        // nav("/3d");
+        // nav("/3d"); // Directly navigate to AR page
         if (intervalRef.current) {
           clearInterval(intervalRef.current);
           intervalRef.current = null;
@@ -102,7 +102,7 @@ export const BikeDetect = () => {
     } else {
       setPredictions([{ className: "Unknown Object", probability: 1 }]);
     }
-  };
+  }, [model, nav]);
 
   useEffect(() => {
     if (model) {
@@ -118,7 +118,7 @@ export const BikeDetect = () => {
         clearInterval(intervalRef.current);
       }
     };
-  }, [model]);
+  }, [model, runWebcamPrediction]);
 
   async function requestCameraPermission() {
     try {

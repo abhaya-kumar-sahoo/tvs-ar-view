@@ -50,6 +50,7 @@ const HomeMobile: React.FC<HomeMobileProps> = () => {
       <div className="w-full my-10 px-4 justify-center align-middle flex">
         <button
           onClick={() => {
+            // nav("/3d");
             nav("/cam");
           }}
           className="w-full py-5 cursor-pointer rounded-lg bg-gradient-to-r from-[#E62D38] to-[#183883] text-white font-bold text-[16px] leading-[1.24em] shadow-[0_0_15px_#E12338] md:max-w-md md:py-4 md:text-xl relative overflow-hidden neon-glow"
