@@ -28,6 +28,7 @@ export default function ARFontAudioExample() {
   const textRef = useRef<THREE.Mesh | null>(null);
   const videoRef = useRef<THREE.Mesh | null>(null);
   const modelRef = useRef<THREE.Object3D | null>(null);
+  const watermarksRef = useRef<THREE.Group | null>(null);
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -143,7 +144,7 @@ export default function ARFontAudioExample() {
           });
           const material = new THREE.MeshStandardMaterial({ color: 0xff0000 });
           const textMesh = new THREE.Mesh(textGeometry, material);
-          textMesh.position.set(-1, 0.25, -2);
+          textMesh.position.set(-1, 0.35, -2);
           textMesh.add(sound);
           scene.add(textMesh);
           sound.play();
@@ -193,6 +194,113 @@ export default function ARFontAudioExample() {
           scene.add(pivot);
 
           modelRef.current = pivot;
+        }
+
+        // --- Multiple Image Watermarks All Around (once) ---
+        if (!watermarksRef.current) {
+          const watermarkGroup = new THREE.Group();
+
+          // Load TVS logo texture
+          const textureLoader = new THREE.TextureLoader();
+          const logoTexture = textureLoader.load("/tvs-logo.png");
+
+          // Create plane geometry for image watermark
+          const watermarkGeometry = new THREE.PlaneGeometry(0.3, 0.15);
+
+          // Semi-transparent material with logo texture
+          const watermarkMaterial = new THREE.MeshBasicMaterial({
+            map: logoTexture,
+            transparent: true,
+            opacity: 0.6,
+            alphaTest: 0.1, // Remove background if logo has transparency
+          });
+
+          // Define positions around the user (circular pattern)
+          const watermarkPositions = [
+            // Front center vertical line (behind main elements)
+            {
+              pos: [0, 1.2, -2.5] as [number, number, number],
+              rot: [0, 0, 0] as [number, number, number],
+            }, // Top center
+
+            {
+              pos: [0, 0, -2.5] as [number, number, number],
+              rot: [0, 0, 0] as [number, number, number],
+            }, // Middle center
+
+            {
+              pos: [0, -1.2, -2.5] as [number, number, number],
+              rot: [0, 0, 0] as [number, number, number],
+            }, // Bottom center
+
+            // Front corner positions
+            {
+              pos: [1.2, -0.7, -1.5] as [number, number, number],
+              rot: [0, 0, 0] as [number, number, number],
+            }, // Bottom right
+            {
+              pos: [-1.2, -0.7, -1.5] as [number, number, number],
+              rot: [0, 0, 0] as [number, number, number],
+            }, // Bottom left
+            {
+              pos: [1.2, 0.8, -1.5] as [number, number, number],
+              rot: [0, 0, 0] as [number, number, number],
+            }, // Top right
+            {
+              pos: [-1.2, 0.8, -1.5] as [number, number, number],
+              rot: [0, 0, 0] as [number, number, number],
+            }, // Top left
+
+            // Side positions (left and right)
+            {
+              pos: [-2, 0, -0.5] as [number, number, number],
+              rot: [0, Math.PI / 2, 0] as [number, number, number],
+            }, // Left side
+            {
+              pos: [2, 0, -0.5] as [number, number, number],
+              rot: [0, -Math.PI / 2, 0] as [number, number, number],
+            }, // Right side
+
+            // Back positions
+            {
+              pos: [0.8, -0.5, 1] as [number, number, number],
+              rot: [0, Math.PI, 0] as [number, number, number],
+            }, // Back right
+            {
+              pos: [-0.8, -0.5, 1] as [number, number, number],
+              rot: [0, Math.PI, 0] as [number, number, number],
+            }, // Back left
+
+            // Additional corner positions
+            {
+              pos: [1.5, 0, 0.8] as [number, number, number],
+              rot: [0, -Math.PI * 0.75, 0] as [number, number, number],
+            }, // Back-right corner
+            {
+              pos: [-1.5, 0, 0.8] as [number, number, number],
+              rot: [0, Math.PI * 0.75, 0] as [number, number, number],
+            }, // Back-left corner
+          ];
+
+          // Create watermark meshes at each position
+          watermarkPositions.forEach((config) => {
+            const watermarkMesh = new THREE.Mesh(
+              watermarkGeometry.clone(),
+              watermarkMaterial.clone()
+            );
+
+            watermarkMesh.position.set(...config.pos);
+            watermarkMesh.rotation.set(...config.rot);
+
+            // Add slight random variation to avoid perfect uniformity
+            watermarkMesh.rotation.x += (Math.random() - 0.5) * 0.1;
+            watermarkMesh.rotation.z += (Math.random() - 0.5) * 0.05;
+
+            watermarkGroup.add(watermarkMesh);
+          });
+
+          scene.add(watermarkGroup);
+          watermarksRef.current = watermarkGroup;
         }
 
         setLoading(false);
@@ -296,8 +404,22 @@ export default function ARFontAudioExample() {
         scene.remove(modelRef.current);
         modelRef.current = null;
       }
+
+      // Dispose watermarks
+      if (watermarksRef.current) {
+        watermarksRef.current.children.forEach((child) => {
+          if (child instanceof THREE.Mesh) {
+            child.geometry.dispose();
+            if (child.material instanceof THREE.Material) {
+              child.material.dispose();
+            }
+          }
+        });
+        scene.remove(watermarksRef.current);
+        watermarksRef.current = null;
+      }
     };
-  }, []);
+  }, [setCurrentStep]);
 
   return (
     <>
