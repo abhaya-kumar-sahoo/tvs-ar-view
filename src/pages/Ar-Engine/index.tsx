@@ -59,12 +59,13 @@ export default function ARFontAudioExample() {
         const sound = new THREE.PositionalAudio(listener);
         const audioLoader = new THREE.AudioLoader();
         audioLoader.load(
-          "/tech-audio.mp3",
+          // "/tech-audio.mp3",
+          "engine-sound.mp3",
           (buffer) => {
             sound.setBuffer(buffer);
             sound.setRefDistance(1);
-            sound.setLoop(false);
-            sound.setVolume(0.8);
+            sound.setLoop(true);
+            sound.setVolume(1);
             resolve(sound);
           },
           undefined,

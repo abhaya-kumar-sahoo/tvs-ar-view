@@ -1,0 +1,69 @@
+/* Poster */
+.model-poster {
+  width: 100%;
+  height: 100%;
+  background: #00ff5500;
+  color: #fff;
+  font-size: 18px;
+  letter-spacing: 0.4px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* AR Button */
+.ar-btn {
+  background: #111;
+  color: #fff;
+  border-radius: 12px;
+  padding: 12px 22px;
+  font-size: 15px;
+  letter-spacing: 0.5px;
+  border: none;
+  cursor: pointer;
+  position: absolute;
+  bottom: 50px;
+  right: 30px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  z-index: 20;
+}
+
+.ar-btn:hover {
+  opacity: 0.85;
+}
+
+/* Exit AR (WebXR) */
+.exit-ar-btn {
+  position: absolute;
+  top: 18px;
+  left: 18px;
+  background: rgba(0, 0, 0, 0.75);
+  color: #fff;
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  cursor: pointer;
+  backdrop-filter: blur(10px);
+  z-index: 20;
+}
+
+/* Progress Bar */
+.progress-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 4px;
+  width: 100%;
+  background: rgba(255, 255, 255, 0.25);
+  overflow: hidden;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  width: 0%;
+  background: #00d4ff;
+  transition: width 0.2s ease-out;
+}

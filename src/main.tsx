@@ -4,6 +4,7 @@ import { BrowserRouter } from "react-router-dom";
 import App from "./App.jsx";
 import "./index.css";
 import { NavigationProvider } from "./components/Navigation.Context.js";
+// import "@google/model-viewer";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>

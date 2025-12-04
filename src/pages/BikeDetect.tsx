@@ -8,6 +8,7 @@ import useOrientation from "../hooks/oriantation";
 // const isiOS = /iPhone|iPad|iPod/.test(navigator.userAgent);
 // const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
 import { ToastContainer, toast } from "react-toastify";
+import { checkOS } from "../hooks/checkOS";
 
 export const BikeDetect = () => {
   const webcamRef = useRef<Webcam>(null);
@@ -21,10 +22,12 @@ export const BikeDetect = () => {
   >([]);
   // const [cameraStarted, setCameraStarted] = useState(false);
   const isPortrait = useOrientation();
+  const isIOS = checkOS();
+
   const startCamera = useCallback(() => {
     enterFullscreenAndUnlock();
     if (!isPortrait) {
-      requestCameraPermission();
+      // requestCameraPermission();
     } else {
       toast(
         "Please enable auto rotate and rotate your device to use this feature.",
@@ -120,18 +123,48 @@ export const BikeDetect = () => {
     };
   }, [model, runWebcamPrediction]);
 
-  async function requestCameraPermission() {
-    try {
-      await navigator.mediaDevices.getUserMedia({
-        video: {
-          facingMode: { exact: "environment" }, // Back camera
-        },
-      });
-      // setCameraStarted(true);
-    } catch (err) {
-      console.error("Camera access denied:", err);
+  // async function requestCameraPermission() {
+  //   try {
+  //     await navigator.mediaDevices.getUserMedia({
+  //       video: {
+  //         facingMode: { exact: "environment" }, // Back camera
+  //       },
+  //     });
+  //     // setCameraStarted(true);
+  //   } catch (err) {
+  //     console.error("Camera access denied:", err);
+  //   }
+  // }
+
+  // Stop camera, clear interval and release resources
+  const stopCamera = () => {
+    // 1. Clear the prediction interval
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
     }
-  }
+
+    // 2. Safely stop all tracks in the video stream
+    const video = webcamRef.current?.video as HTMLVideoElement | undefined;
+
+    if (video?.srcObject) {
+      const stream = video.srcObject as MediaStream;
+      stream.getTracks().forEach((track) => {
+        track.stop(); // This is crucial — stops camera/mic access
+      });
+      video.srcObject = null; // Detach stream from video element
+    }
+
+    // Optional: pause the video element explicitly (good practice)
+    if (video) {
+      video.pause();
+    }
+
+    // 3. Reset predictions
+    setPredictions([]);
+
+    nav(isIOS ? "/ios" : "/3d");
+  };
 
   // Loader component
   const Loader = () => (
@@ -196,7 +229,7 @@ export const BikeDetect = () => {
                     </button>
                     <button
                       onClick={() => {
-                        nav("/3d");
+                        stopCamera();
                       }}
                       className="px-4 mx-2 rounded bg-amber-600 py-2 text-white"
                     >
@@ -212,6 +245,8 @@ export const BikeDetect = () => {
                   {!isPortrait && <Loader />}
                 </div>
               )}
+
+              {/* <button onClick={stopCamera}>Close Cam</button> */}
             </div>
           </div>
         </div>

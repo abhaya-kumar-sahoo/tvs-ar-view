@@ -1,50 +1,90 @@
-import { Canvas } from "@react-three/fiber";
-import { createXRStore, XR } from "@react-three/xr";
-import Video1 from "./assets/videos/eg1.mp4";
-import Video2 from "./assets/videos/eg2.mp4";
-import useOrientation from "./hooks/oriantation";
-
-interface VideoProps {
-  src: string;
-  position: string;
-  size: string;
+import { useEffect, useRef } from "react";
+import "./modelViewer.css";
+// Type declaration for model-viewer
+declare module "react" {
+  // eslint-disable-next-line @typescript-eslint/no-namespace
+  namespace JSX {
+    interface IntrinsicElements {
+      "model-viewer": React.DetailedHTMLProps<
+        React.HTMLAttributes<HTMLElement>,
+        HTMLElement
+      > & {
+        src?: string;
+        ar?: boolean;
+        "ar-modes"?: string;
+        "camera-controls"?: boolean;
+        "shadow-intensity"?: string;
+        alt?: string;
+        "auto-rotate"?: boolean;
+        orientation?: string;
+      };
+    }
+  }
 }
 
-const Video = ({ src, position, size }: VideoProps) => (
-  <video
-    src={src}
-    className={`absolute ${position} ${size} object-center`}
-    autoPlay
-    loop
-    muted
-    playsInline
-  />
-);
-
 export default function AppAr() {
-  const isPortrait = useOrientation();
-  const videoSize = isPortrait ? "w-52 h-40" : "w-64 h-40";
-  const arHeight = isPortrait ? "h-[70vh]" : "h-[60vh]";
-  const store = createXRStore();
+  const viewerRef = useRef(null);
+  const audioRef = useRef(new Audio("/engine-sound.mp3"));
+
+
+  useEffect(() => {
+    const audio = audioRef.current;
+    audio.loop = true;
+
+    return () => {
+      audio.pause();
+      audio.currentTime = 0;
+    };
+  }, []);
+
+  const handleARClick = () => {
+    audioRef.current.play().catch((error) => {
+      console.error("Audio play failed:", error);
+    });
+  };
 
   return (
-    <div className="w-screen h-screen m-0 p-0">
-      <div className="w-screen">
-        <div className="w-full">
-          <Video src={Video1} position="left-0" size={videoSize} />
-          <Video src={Video2} position="right-0" size={videoSize} />
+    <div
+      style={{
+        background:
+          "linear-gradient(135deg, #ff006e 0%, #8338ec 50%, #3a86ff 100%)", // Modern red → purple → blue gradient
+        width: "100vw",
+        height: "90vh",
+        margin: 0,
+        padding: 0,
+        overflow: "hidden",
+        position: "relative",
+        fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+      }}
+    >
+      <model-viewer
+        ref={viewerRef}
+        src="/m3.glb"
+        alt="M1 Model"
+        ar
+        ar-modes="quick-look webxr scene-viewer"
+        camera-controls
+        auto-rotate
+        touch-action="pan-y"
+
+        skybox-height="2m" max-camera-orbit="auto 90deg auto"
+        orientation="0deg 0deg -90deg"
+        xr-environment
+        style={{ width: "100%", height: "100%", paddingTop: "40%", backgroundColor: "transparent" }}
+      >
+        <div slot="poster" className="model-poster">
+          Loading Model…
         </div>
 
-        <div className={`absolute bottom-0 w-full ${arHeight} bg-gray-800`}>
-          <Canvas>
-            <XR store={store}>
-              <ambientLight />
-              <pointLight position={[0, 1, 1]} />
-              {/* <ARScene /> */}
-            </XR>
-          </Canvas>
-        </div>
-      </div>
+        <button slot="ar-button" className="ar-btn" onClick={handleARClick}>
+          View in AR
+        </button>
+        <button slot="exit-webxr-ar-button" className="exit-ar-btn">
+          Exit AR
+        </button>
+
+
+      </model-viewer>
     </div>
   );
 }
