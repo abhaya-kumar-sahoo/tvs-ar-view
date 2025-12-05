@@ -10,6 +10,9 @@ import { checkOS } from "./hooks/checkOS";
 // import Home from "./pages/Home";
 // import HomeMobile from "./pages/HomeMobile";
 // PGTESTPAYUAT86
+// overhappy-bertha-semidomestic.ngrok-free.dev
+// allowedHosts: ["unperpetuable-nonhostile-adrianne.ngrok-free.dev"],
+
 export default function App() {
   const isIOS = checkOS();
   console.log({ isIOS });
@@ -17,7 +20,7 @@ export default function App() {
     <div className="w-screen h-full  text-gray-300">
       <Routes>
         <Route path="/" element={<HomeMobile />} />
-        {!isIOS && <Route path="/ios" element={<AppAr />} />}
+        {isIOS && <Route path="/ios" element={<AppAr />} />}
         <Route path="/cam" element={<BikeDetect />} />
         <Route path="/3d" element={<Stage3 />} />
 

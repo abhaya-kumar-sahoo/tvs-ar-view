@@ -17,15 +17,17 @@ declare module "react" {
         alt?: string;
         "auto-rotate"?: boolean;
         orientation?: string;
+        scale?: string;
+        "touch-action"?: string;
       };
     }
   }
 }
 
 export default function AppAr() {
-  const viewerRef = useRef(null);
-  const audioRef = useRef(new Audio("/engine-sound.mp3"));
+  const viewerRef = useRef<any>(null);
 
+  const audioRef = useRef(new Audio("/engine-sound.mp3"));
 
   useEffect(() => {
     const audio = audioRef.current;
@@ -47,9 +49,9 @@ export default function AppAr() {
     <div
       style={{
         background:
-          "linear-gradient(135deg, #ff006e 0%, #8338ec 50%, #3a86ff 100%)", // Modern red → purple → blue gradient
+          "linear-gradient(135deg, #ff006e 0%, #8338ec 50%, #3a86ff 100%)",
         width: "100vw",
-        height: "90vh",
+        height: "100vh", // Changed to 100vh for full screen
         margin: 0,
         padding: 0,
         overflow: "hidden",
@@ -59,18 +61,20 @@ export default function AppAr() {
     >
       <model-viewer
         ref={viewerRef}
-        src="/m3.glb"
-        alt="M1 Model"
+        id="append-demo"
+        src={`/m2.glb`} // Assuming models are in public root based on file list
+        camera-controls
+        touch-action="pan-y"
         ar
         ar-modes="quick-look webxr scene-viewer"
-        camera-controls
-        auto-rotate
-        touch-action="pan-y"
-
-        skybox-height="2m" max-camera-orbit="auto 90deg auto"
+        scale="0.1 0.1 0.1"
         orientation="0deg 0deg -90deg"
-        xr-environment
-        style={{ width: "100%", height: "100%", paddingTop: "40%", backgroundColor: "transparent" }}
+        auto-rotate
+        skybox-height="2m"
+        max-camera-orbit="auto 90deg auto"
+        shadow-intensity="1"
+        alt="An animated 3D model"
+        style={{ width: "100%", height: "100%" }}
       >
         <div slot="poster" className="model-poster">
           Loading Model…
@@ -79,11 +83,6 @@ export default function AppAr() {
         <button slot="ar-button" className="ar-btn" onClick={handleARClick}>
           View in AR
         </button>
-        <button slot="exit-webxr-ar-button" className="exit-ar-btn">
-          Exit AR
-        </button>
-
-
       </model-viewer>
     </div>
   );
